@@ -1,2 +1,2 @@
 # schemin-c
-Scheme in C
+Schemin' in C
