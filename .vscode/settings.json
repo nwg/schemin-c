@@ -22,4 +22,16 @@
                 "traceResponse": true
         }
     },
+    "files.exclude": {
+        "*.swp": true,
+        "**/*~": true,
+        "build": true,
+        "cmake_install.cmake": true,
+        "CMakeCache.txt": true,
+        "cscope.files": true,
+        "cscope.in.out": true,
+        "cscope.out": true,
+        "cscope.po.out": true,
+        "TAGS": true
+    },
 }
