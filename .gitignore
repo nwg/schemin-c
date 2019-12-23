@@ -50,3 +50,42 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+# Cscope
+cscope.in.out
+cscope.files
+cscope.out
+cscope.po.out
+
+# Ctags
+TAGS
+
+# Mac OS X
+.DS_Store
+
+# Emacs
+*~
+\#*\#
+*.elc
+.\#*
+
+# VSCode
+.compile-commands-hidden.json
+
+# CMake
+CMakeLists.txt.user
+CMakeCache.txt
+CMakeFiles
+CMakeScripts
+Testing
+Makefile
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+CTestTestfile.cmake
+_deps
+
+# Other
+.trash
+build
+version.h

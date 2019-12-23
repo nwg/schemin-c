@@ -1,0 +1,25 @@
+{
+    "files.associations": {
+        "locale.h": "c",
+        "assert.h": "c",
+        "utf8proc.h": "c"
+    },
+    "clang-format.executable": "/Users/griswold/.npm-packages/bin/clang-format",
+    "c-cpp-flylint.clang.includePaths": [
+        "/opt/local/include",
+        "${default}"
+    ],
+    "cmake.configureOnOpen": true,
+
+    "cmake.debugConfig": {
+        "stopAtEntry": false,
+        "MIMode": "lldb",
+       "miDebuggerPath": "/opt/local/bin/lldb-mi-mp-9.0",
+//        "miDebuggerPath": "/Users/griswold/.vscode/extensions/ms-vscode.cpptools-0.26.2/debugAdapters/lldb/bin/lldb-mi",
+        "logging": {
+                "trace": true,
+                "engineLogging": true,
+                "traceResponse": true
+        }
+    },
+}
