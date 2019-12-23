@@ -86,6 +86,7 @@ CTestTestfile.cmake
 _deps
 
 # Other
-.trash
-build
-version.h
+/.trash
+/build
+/version.h
+/schemin
