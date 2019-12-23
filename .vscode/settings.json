@@ -33,5 +33,10 @@
         "cscope.out": true,
         "cscope.po.out": true,
         "TAGS": true
-    }
+    },
+    "c-cpp-flylint.language": "c",
+    "c-cpp-flylint.standard": [
+        "c99"
+//        "c++11"
+      ]
 }

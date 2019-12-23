@@ -4,6 +4,8 @@ include(${CMAKE_ROOT}/Modules/ExternalProject.cmake)
 include (utils.cmake)
 disallow_intree_builds()
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 # set the project name and version
 project(Schemin VERSION 0.1)
 

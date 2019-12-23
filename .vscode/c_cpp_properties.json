@@ -12,7 +12,7 @@
             "macFrameworkPath": [
                 "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk"
             ],
-            "compileCommands": "${default}",
+            "compileCommands": "${workspaceFolder}/build/compile_commands.json",
             "browse": {
                 "limitSymbolsToIncludedHeaders": true,
                 "databaseFilename": "${default}",
@@ -22,7 +22,7 @@
                 ]
             },
             "intelliSenseMode": "${default}",
-            "cStandard": "c11",
+            "cStandard": "c99",
             "cppStandard": "${default}",
             "compilerPath": "${default}",
             "configurationProvider": "vector-of-bool.cmake-tools"
