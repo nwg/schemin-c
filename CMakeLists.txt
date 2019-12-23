@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.10)
 include(${CMAKE_ROOT}/Modules/ExternalProject.cmake)
 
+include (utils.cmake)
+disallow_intree_builds()
+
 # set the project name and version
 project(Schemin VERSION 0.1)
 
