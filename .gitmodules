@@ -1,3 +1,4 @@
 [submodule "third-party/utf8proc"]
 	path = third-party/utf8proc
 	url = git@github.com:JuliaStrings/utf8proc.git
+    ignore = dirty
