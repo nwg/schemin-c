@@ -90,3 +90,4 @@ _deps
 /build
 /version.h
 /schemin
+/.vscode
