@@ -9,7 +9,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # set the project name and version
 project(Schemin LANGUAGES C VERSION 0.1)
 
-add_executable(schemin src/schemin.c src/utf8.c)
+add_executable(schemin src/schemin.c src/parser.c src/prettyprint.c)
 set_property(TARGET schemin PROPERTY C_STANDARD 11)
 
 configure_file(version.h.in version.h)

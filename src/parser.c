@@ -1,10 +1,11 @@
+#include "parser.h"
 #include <utf8proc.h>
 #include <stdint.h>
 #include <stddef.h>
 #include <assert.h>
 #include <string.h>
-#include "utf8.h"
 #include "minmax.h"
+#include "scheme_types.h"
 
 typedef bool (*codepoint_predicate_func)(utf8proc_int32_t codepoint, void *data);
 
@@ -47,7 +48,7 @@ static utf8proc_size_t utf8_take_reverse(const utf8proc_uint8_t *str, utf8proc_s
   return strlen - offset;
 }
 
-bool verify_matching_parens(const char *utf8, size_t len, int *maxdepth) {
+static bool verify_matching_parens(const char *utf8, size_t len, int *maxdepth) {
   int count = 0;
   int imaxdepth = 0;
   for (int i = 0; i < len; i++) {
@@ -182,3 +183,69 @@ size_t trim_whitespace(const char *utf8, size_t len, const char **dst) {
   return (size_t)(end - start);
 }
 
+static cons_t *valid_sexp_into_cons(const char *sexp, size_t len) {
+  if (len == 0)
+    return NULL;
+
+  assert(sexp[0] == '(');
+  size_t subexp_size = scan_for_closing_paren(sexp, len) - 2;
+
+  size_t remaining = subexp_size;
+  const char *tok;
+  size_t leading;
+  size_t toklen = utf8_tok_lisp(&sexp[1], subexp_size, &tok, &leading);
+  if (tok == NULL)
+    return NULL;
+
+  cons_t *result = (cons_t *)malloc(sizeof(cons_t));
+  cons_t *current = result;
+  while (true) {
+    if (result == NULL) result = current;
+
+    object_t *value = valid_exp_into_object(tok, toklen);
+    current->car = value;
+
+    remaining -= toklen + leading;
+    toklen = utf8_tok_lisp(tok + toklen, remaining, &tok, &leading);
+
+    if (tok == NULL) {
+      current->cdr = (object_t*)malloc(sizeof(object_t));
+      current->cdr->type = SCHEME_NULL;
+      break;
+    }
+    cons_t *newcons = (cons_t *)malloc(sizeof(cons_t));
+    object_t *newobject = (object_t*)malloc(sizeof(object_t));
+    newobject->type = SCHEME_CONS;
+    newobject->data.cons = newcons;
+    current->cdr = newobject;
+    current = newcons;
+  }
+
+  return result;
+}
+
+object_t* valid_exp_into_object(const char *exp, size_t len) {
+  len = trim_whitespace(exp, len, &exp);
+  if (exp == NULL) return NULL;
+  if (len == 0) return NULL;
+
+  object_t *value = (object_t *)malloc(sizeof(object_t));
+  if (exp[0] == '(') {
+    cons_t *subcons = valid_sexp_into_cons(exp, len);
+
+    if (subcons == NULL) {
+      value->type = SCHEME_NULL;
+    } else {
+      value->type = SCHEME_CONS;
+      value->data.cons = subcons;
+    }
+  } else {
+    value->type = SCHEME_SYMBOL;
+    char *symbol = (char *)malloc(len + 1);
+    memcpy(symbol, exp, len);
+    symbol[len] = '\0';
+    value->data.symbol = symbol;
+  }
+
+  return value;
+}
