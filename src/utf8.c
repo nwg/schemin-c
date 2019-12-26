@@ -29,21 +29,22 @@ static size_t utf8_take(const utf8proc_uint8_t *str, utf8proc_size_t lenstr, cod
   return (size_t)(ptr - str);
 }
 
-static const utf8proc_uint8_t * utf8_take_reverse(const utf8proc_uint8_t *str, utf8proc_size_t strlen, codepoint_predicate_func p, void *p_data) {
+static utf8proc_size_t utf8_take_reverse(const utf8proc_uint8_t *str, utf8proc_size_t strlen, codepoint_predicate_func p, void *p_data, const utf8proc_uint8_t **outdst) {
   utf8proc_int32_t codepoint;
   utf8proc_size_t offset = strlen;
   while (offset > 0) {
     utf8proc_size_t len;
     len = utf8proc_iterate_reverse_unsafe(str, offset, &codepoint);
     assert(utf8proc_codepoint_valid(codepoint));
-    offset -= len;
     if (!p(codepoint, p_data)) {
       break;
     }
+    offset -= len;
   }
 
   assert(offset >= 0);
-  return &str[offset];
+  *outdst = &str[offset];
+  return strlen - offset;
 }
 
 bool verify_matching_parens(const char *utf8, size_t len, int *maxdepth) {
@@ -173,10 +174,11 @@ size_t trim_whitespace(const char *utf8, size_t len, const char **dst) {
     *dst = NULL;
     return 0;
   }
-  const utf8proc_uint8_t * end = utf8_take_reverse((const utf8proc_uint8_t *)utf8, len, &is_whitespace, NULL);
+  const utf8proc_uint8_t * end;
+  utf8_take_reverse((const utf8proc_uint8_t *)utf8, len, &is_whitespace, NULL, &end);
 
   assert(start <= end);
   *dst = (const char*)start;
-  return (size_t)(end - start + 1);
+  return (size_t)(end - start);
 }
 
