@@ -5,7 +5,13 @@
 #include <stdlib.h>
 #include <string.h>
 
-typedef enum { NUMBER, STRING, SYMBOL, CONS, SCHEME_NULL } type_t;
+typedef enum {
+  SCHEME_NUMBER,
+  SCHEME_STRING,
+  SCHEME_SYMBOL,
+  SCHEME_CONS,
+  SCHEME_NULL
+} type_t;
 
 typedef struct cons_s cons_t;
 
@@ -75,7 +81,7 @@ static cons_t *valid_sexp_into_cons(const char *sexp, size_t len) {
     }
     cons_t *newcons = (cons_t *)malloc(sizeof(cons_t));
     object_t *newobject = (object_t*)malloc(sizeof(object_t));
-    newobject->type = CONS;
+    newobject->type = SCHEME_CONS;
     newobject->data.cons = newcons;
     current->cdr = newobject;
     current = newcons;
@@ -96,11 +102,11 @@ static object_t* valid_exp_into_object(const char *exp, size_t len) {
     if (subcons == NULL) {
       value->type = SCHEME_NULL;
     } else {
-      value->type = CONS;
+      value->type = SCHEME_CONS;
       value->data.cons = subcons;
     }
   } else {
-    value->type = SYMBOL;
+    value->type = SCHEME_SYMBOL;
     char *symbol = (char *)malloc(len + 1);
     memcpy(symbol, exp, len);
     symbol[len] = '\0';
@@ -114,11 +120,11 @@ static void print_cons(cons_t *cons);
 
 static void print_object(object_t *object) {
   switch (object->type) {
-    case CONS: {
+    case SCHEME_CONS: {
       print_cons(object->data.cons);
       break;
     }
-    case SYMBOL: {
+    case SCHEME_SYMBOL: {
       printf("%s", object->data.symbol);
       break;
     }
@@ -126,7 +132,9 @@ static void print_object(object_t *object) {
       printf("'()");
       break;
     }
-    default: {
+    case SCHEME_NUMBER:
+    case SCHEME_STRING:
+    {
       printf("<not handled>");
       break;
     }
