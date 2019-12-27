@@ -64,7 +64,9 @@ static bool verify_matching_parens(const char *utf8, size_t len, int *maxdepth) 
 
   if (count != 0) return false;
 
-  *maxdepth = imaxdepth;
+  if (maxdepth != NULL) {
+    *maxdepth = imaxdepth;
+  }
   return true;
 }
 
@@ -248,4 +250,8 @@ object_t* valid_exp_into_object(const char *exp, size_t len) {
   }
 
   return value;
+}
+
+bool quick_verify_scheme(const char *exp, size_t len) {
+  return verify_matching_parens(exp, len, NULL);
 }
