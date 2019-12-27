@@ -110,6 +110,89 @@ static size_t scan2_for_closing_paren(const char *utf8, size_t len) {
   return (size_t)i;
 }
 
+/**
+ * Scan string in @ref utf8, processing escapes and placing into @ref outdst.
+ * Only scan the string but do not write the processed string copy if @ref outdst is NULL
+ * Return error if outdst is non-null and dstlen is not big enough
+ * Always return full size of string ()
+ */
+static ssize_t scan_string(const char *utf8, size_t len, char **outdst, size_t dstlen, size_t *outdstlen) {
+  assert(utf8[0] == '"');
+  int i;
+  size_t size = 0;
+  bool last_was_slash = false;
+  bool found_closing_quote = false;
+  for (i = 1; i < len; i++) {
+    char byte;
+    if (utf8[i] == '\\') {
+      if (last_was_slash) {
+        last_was_slash = false;
+        byte = '\\';
+        goto write_byte;
+      } else {
+        last_was_slash = true;
+        continue;
+      }
+    } else if (utf8[i] == '"') {
+      if (last_was_slash) {
+        last_was_slash = false;
+        byte = '"';
+        goto write_byte;
+      } else {
+        found_closing_quote = true;
+        break;
+      }
+    } else {
+      if (last_was_slash) {
+        // Unrecognized escape
+        if (outdst) *outdst = NULL;
+        return -1;
+      }
+      byte = utf8[i];
+      goto write_byte;
+    }
+write_byte:
+    if (outdst != NULL) {
+      if (size >= dstlen - 1) {
+        return -1;
+      }
+      (*outdst)[size] = byte;
+    }
+    size++;
+  }
+
+  if (!found_closing_quote) {
+    if (outdst != NULL) *outdst = NULL;
+    if (outdstlen != NULL) *outdstlen = 0;
+    return -1;
+  }
+
+  assert(found_closing_quote);
+  assert(i < len);
+  if (outdst != NULL) (*outdst)[size] = '\0';
+  if (outdstlen != NULL) *outdstlen = size + 1;
+  return i + 1;
+}
+
+static ssize_t scan_and_copy_string(const char *utf8, size_t len, char **dst) {
+  size_t newlen;
+  ssize_t result = scan_string(utf8, len, NULL, 0, &newlen);
+  if (result < 0) {
+    return result;
+  }
+
+  char *dest = (char*)malloc(newlen);
+  result = scan_string(utf8, len, &dest, newlen, NULL);
+  if (result < 0) {
+    free(dest);
+    *dst = NULL;
+    return result;
+  }
+
+  *dst = dest;
+  return newlen;
+}
+
 static bool is_whitespace(utf8proc_int32_t codepoint, void *data) {
   (void)data;
   const utf8proc_property_t *p = utf8proc_get_property(codepoint);
@@ -162,6 +245,13 @@ static size_t utf8_tok_lisp(const char *exp, size_t len, const char **outdst, si
     *outdst = (const char*)start;
     *outleading = leading;
     return subexp_size;
+  } else if (start[0] == '"') {
+    const char *str_contents;
+    ssize_t result = scan_string((const char*)start, remaining, NULL, 0, NULL);
+    assert(result >= 0);
+    *outdst = (const char*)start;
+    *outleading = leading;
+    return result;
   }
 
   size_t toksize = utf8_take(start, len - leading, &not_is_whitespace, NULL);
@@ -241,6 +331,12 @@ object_t* valid_exp_into_object(const char *exp, size_t len) {
       value->type = SCHEME_CONS;
       value->data.cons = subcons;
     }
+  } else if (exp[0] == '"') {
+    char *dst;
+    ssize_t result = scan_and_copy_string(exp, len, &dst);
+    assert(result >= 0);
+    value->type = SCHEME_STRING;
+    value->data.str = dst;
   } else {
     value->type = SCHEME_SYMBOL;
     char *symbol = (char *)malloc(len + 1);

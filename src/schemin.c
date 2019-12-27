@@ -7,7 +7,7 @@
 int main(int argc, char *argv[]) {
   setlocale(LC_ALL, "");
 
-  const char *test = "    (something else (   here we go   ) again)    ";
+  const char *test = "    (something else (   \"he\\\"re\" we go   ) again)    ";
   size_t test_size = strlen(test);
   if (!quick_verify_scheme(test, test_size)) {
     printf("Invalid scheme\n");
