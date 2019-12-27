@@ -280,7 +280,7 @@ static cons_t *valid_sexp_into_cons(const char *sexp, size_t len) {
     return NULL;
 
   assert(sexp[0] == '(');
-  size_t subexp_size = scan2_for_closing_paren(sexp, len) - 2;
+  size_t subexp_size = scan_for_closing_paren(sexp, len) - 2;
 
   size_t remaining = subexp_size;
   const char *tok;
