@@ -51,7 +51,7 @@ static utf8proc_size_t utf8_take_reverse(const utf8proc_uint8_t *str, utf8proc_s
 static bool verify_matching_parens(const char *utf8, size_t len, int *maxdepth) {
   int count = 0;
   int imaxdepth = 0;
-  for (int i = 0; i < len; i++) {
+  for (size_t i = 0; i < len; i++) {
     if (utf8[i] == '(') {
       count++;
       imaxdepth = MAX(imaxdepth, count);
@@ -70,10 +70,10 @@ static bool verify_matching_parens(const char *utf8, size_t len, int *maxdepth) 
   return true;
 }
 
-static char *strnrchr(const char *string, char c, size_t size) {
+static const char *strnrchr(const char *string, char c, size_t size) {
   for (size_t i = size - 1; i > 0; i--) {
     if (string[i] == c) {
-      return (char*)(&string[i]);
+      return &string[i];
     }
   }
 
@@ -94,7 +94,7 @@ static size_t scan_for_closing_paren(const char *utf8, size_t len) {
 static size_t scan2_for_closing_paren(const char *utf8, size_t len) {
   assert(utf8[0] == '(');
   int count = 1;
-  int i;
+  size_t i;
   for (i = 1; i < len; i++) {
     if (utf8[i] == '(') count++;
     else if (utf8[i] == ')') count--;
@@ -107,7 +107,7 @@ static size_t scan2_for_closing_paren(const char *utf8, size_t len) {
 
   // Should never reach here on valid input. Assert.
   assert(count == 0);
-  return (size_t)i;
+  return i;
 }
 
 /**
@@ -118,7 +118,7 @@ static size_t scan2_for_closing_paren(const char *utf8, size_t len) {
  */
 static ssize_t scan_string(const char *utf8, size_t len, char **outdst, size_t dstlen, size_t *outdstlen) {
   assert(utf8[0] == '"');
-  int i;
+  size_t i;
   size_t size = 0;
   bool last_was_slash = false;
   bool found_closing_quote = false;
@@ -171,7 +171,7 @@ write_byte:
   assert(i < len);
   if (outdst != NULL) (*outdst)[size] = '\0';
   if (outdstlen != NULL) *outdstlen = size + 1;
-  return i + 1;
+  return (ssize_t)i + 1;
 }
 
 static ssize_t scan_and_copy_string(const char *utf8, size_t len, char **dst) {
@@ -190,7 +190,7 @@ static ssize_t scan_and_copy_string(const char *utf8, size_t len, char **dst) {
   }
 
   *dst = dest;
-  return newlen;
+  return (ssize_t)newlen;
 }
 
 static bool is_whitespace(utf8proc_int32_t codepoint, void *data) {
@@ -214,22 +214,6 @@ static bool is_whitespace(utf8proc_int32_t codepoint, void *data) {
 
 INVERTED_PREDICATE(not_is_whitespace, is_whitespace)
 
-static size_t utf8_tok_whitespace(const char *utf8, size_t len, const char **outdst, size_t *outleading) {
-  utf8proc_size_t leading = utf8_take((const utf8proc_uint8_t *)utf8, len, &is_whitespace, NULL);
-  if (leading == len) {
-    *outleading = leading;
-    *outdst = NULL;
-    return 0;
-  }
-
-  utf8proc_uint8_t *start = (utf8proc_uint8_t*)utf8 + leading;
-  size_t toksize = utf8_take(start, len - leading, &not_is_whitespace, NULL);
-
-  *outleading = leading;
-  *outdst = (const char*)start;
-  return toksize;
-}
-
 static size_t utf8_tok_lisp(const char *exp, size_t len, const char **outdst, size_t *outleading) {
   utf8proc_size_t leading = utf8_take((const utf8proc_uint8_t *)exp, len, &is_whitespace, NULL);
   if (leading == len) {
@@ -239,19 +223,18 @@ static size_t utf8_tok_lisp(const char *exp, size_t len, const char **outdst, si
   }
 
   size_t remaining = len - leading;
-  utf8proc_uint8_t *start = (utf8proc_uint8_t*)exp + leading;
+  const utf8proc_uint8_t *start = (const utf8proc_uint8_t*)exp + leading;
   if (start[0] == '(') {
     size_t subexp_size = scan2_for_closing_paren((const char*)start, remaining);
     *outdst = (const char*)start;
     *outleading = leading;
     return subexp_size;
   } else if (start[0] == '"') {
-    const char *str_contents;
     ssize_t result = scan_string((const char*)start, remaining, NULL, 0, NULL);
     assert(result >= 0);
     *outdst = (const char*)start;
     *outleading = leading;
-    return result;
+    return (size_t)result;
   }
 
   size_t toksize = utf8_take(start, len - leading, &not_is_whitespace, NULL);
