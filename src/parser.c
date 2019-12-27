@@ -82,7 +82,7 @@ static char *strnrchr(const char *string, char c, size_t size) {
  * @param utf8 a valid sexp
  * return index of string just after closing paren for valid paren sexp in @ref utf8
  */
-size_t scan_for_closing_paren(const char *utf8, size_t len) {
+static size_t scan_for_closing_paren(const char *utf8, size_t len) {
   assert(utf8[0] == '(');
   const char *pos = strnrchr(utf8, ')', len);
   assert(pos != NULL);
@@ -129,7 +129,7 @@ static bool is_whitespace(utf8proc_int32_t codepoint, void *data) {
 
 INVERTED_PREDICATE(not_is_whitespace, is_whitespace)
 
-size_t utf8_tok_whitespace(const char *utf8, size_t len, const char **outdst, size_t *outleading) {
+static size_t utf8_tok_whitespace(const char *utf8, size_t len, const char **outdst, size_t *outleading) {
   utf8proc_size_t leading = utf8_take((const utf8proc_uint8_t *)utf8, len, &is_whitespace, NULL);
   if (leading == len) {
     *outleading = leading;
@@ -145,7 +145,7 @@ size_t utf8_tok_whitespace(const char *utf8, size_t len, const char **outdst, si
   return toksize;
 }
 
-size_t utf8_tok_lisp(const char *exp, size_t len, const char **outdst, size_t *outleading) {
+static size_t utf8_tok_lisp(const char *exp, size_t len, const char **outdst, size_t *outleading) {
   utf8proc_size_t leading = utf8_take((const utf8proc_uint8_t *)exp, len, &is_whitespace, NULL);
   if (leading == len) {
     *outleading = leading;
@@ -168,7 +168,7 @@ size_t utf8_tok_lisp(const char *exp, size_t len, const char **outdst, size_t *o
   return toksize;
 }
 
-size_t trim_whitespace(const char *utf8, size_t len, const char **dst) {
+static size_t trim_whitespace(const char *utf8, size_t len, const char **dst) {
   utf8proc_size_t leftlen = utf8_take((const utf8proc_uint8_t *)utf8, len, &is_whitespace, NULL);
   const utf8proc_uint8_t *start = (const utf8proc_uint8_t*)utf8 + leftlen;
   if (leftlen == len) {
