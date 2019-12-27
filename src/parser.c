@@ -69,7 +69,7 @@ static bool verify_matching_parens(const char *utf8, size_t len, int *maxdepth) 
 }
 
 static char *strnrchr(const char *string, char c, size_t size) {
-  for (unsigned int i = size - 1; size > 0; size--) {
+  for (size_t i = size - 1; i > 0; i--) {
     if (string[i] == c) {
       return (char*)(&string[i]);
     }
