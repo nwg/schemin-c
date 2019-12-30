@@ -45,7 +45,7 @@ static void print_cons(cons_t *cons);
 void print_object(object_t *object) {
   switch (object->type) {
     case SCHEME_CONS: {
-      print_cons(object->data.cons);
+      print_cons(&object->data.cons);
       break;
     }
     case SCHEME_SYMBOL: {

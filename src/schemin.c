@@ -1,11 +1,18 @@
 #include <locale.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include "parser.h"
 #include "prettyprint.h"
+#include "system.h"
 
 int main(int argc, char *argv[]) {
   setlocale(LC_ALL, "");
+
+  if (system_init() != 0) {
+    fprintf(stderr, "Could not init system");
+    exit(1);
+  }
 
   const char *test = "    (something else (   \"he\\\"re\" we go   ) again)    ";
   size_t test_size = strlen(test);

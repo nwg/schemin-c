@@ -6,6 +6,7 @@
 #include <string.h>
 #include "minmax.h"
 #include "scheme_types.h"
+#include "memory.h"
 
 typedef bool (*codepoint_predicate_func)(utf8proc_int32_t codepoint, void *data);
 
@@ -258,7 +259,7 @@ static size_t trim_whitespace(const char *utf8, size_t len, const char **dst) {
   return (size_t)(end - start);
 }
 
-static cons_t *valid_sexp_into_cons(const char *sexp, size_t len) {
+static object_t *valid_list_sexp_into_object(const char *sexp, size_t len) {
   if (len == 0)
     return NULL;
 
@@ -272,28 +273,24 @@ static cons_t *valid_sexp_into_cons(const char *sexp, size_t len) {
   if (tok == NULL)
     return NULL;
 
-  cons_t *result = (cons_t *)malloc(sizeof(cons_t));
-  cons_t *current = result;
+  object_t *result = allocate_object();
+  result->type = SCHEME_CONS;
+  object_t *current = result;
   while (true) {
-    if (result == NULL) result = current;
-
-    object_t *value = valid_exp_into_object(tok, toklen);
-    current->car = value;
+    current->data.cons.car = valid_exp_into_object(tok, toklen);
 
     remaining -= toklen + leading;
     toklen = utf8_tok_lisp(tok + toklen, remaining, &tok, &leading);
 
     if (tok == NULL) {
-      current->cdr = (object_t*)malloc(sizeof(object_t));
-      current->cdr->type = SCHEME_NULL;
+      object_t *terminator = g_scheme_null;
+      current->data.cons.cdr = terminator;
       break;
     }
-    cons_t *newcons = (cons_t *)malloc(sizeof(cons_t));
-    object_t *newobject = (object_t*)malloc(sizeof(object_t));
+    object_t *newobject = allocate_object();
     newobject->type = SCHEME_CONS;
-    newobject->data.cons = newcons;
-    current->cdr = newobject;
-    current = newcons;
+    current->data.cons.cdr = newobject;
+    current = newobject;
   }
 
   return result;
@@ -304,23 +301,22 @@ object_t* valid_exp_into_object(const char *exp, size_t len) {
   if (exp == NULL) return NULL;
   if (len == 0) return NULL;
 
-  object_t *value = (object_t *)malloc(sizeof(object_t));
+  object_t *value;
   if (exp[0] == '(') {
-    cons_t *subcons = valid_sexp_into_cons(exp, len);
+    value = valid_list_sexp_into_object(exp, len);
 
-    if (subcons == NULL) {
-      value->type = SCHEME_NULL;
-    } else {
-      value->type = SCHEME_CONS;
-      value->data.cons = subcons;
+    if (value == NULL) {
+      value = g_scheme_null;
     }
   } else if (exp[0] == '"') {
+    value = allocate_object();
     char *dst;
     ssize_t result = scan_and_copy_string(exp, len, &dst);
     assert(result >= 0);
     value->type = SCHEME_STRING;
     value->data.str = dst;
   } else {
+    value = allocate_object();
     value->type = SCHEME_SYMBOL;
     char *symbol = (char *)malloc(len + 1);
     memcpy(symbol, exp, len);
