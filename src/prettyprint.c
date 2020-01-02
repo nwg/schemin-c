@@ -47,7 +47,7 @@ void print_object(object_t *object) {
   }
   case SCHEME_SYMBOL: {
     symbol_entry_t *entry = get_symbol_entry(object);
-    printf("%s", entry->sym);
+    printf("'%s", entry->sym);
     break;
   }
   case SCHEME_NULL: {

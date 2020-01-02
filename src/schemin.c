@@ -12,7 +12,7 @@ int main(int argc, char *argv[]) {
   
   ASSERT_OR_ERROR(system_init() == 0, "Could not init system");
 
-  const char *test = "(define x \"123\")";
+  const char *test = "(define x (quote abc))";
   const char *test2 = "x";
   size_t test_size = strlen(test);
   if (!quick_verify_scheme(test, test_size)) {

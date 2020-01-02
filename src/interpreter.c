@@ -85,6 +85,14 @@ static inline object_t *definition_value(object_t *exp) {
   return caddr(exp);
 }
 
+static inline bool is_quoted(object_t *exp) {
+  return is_tagged_list(exp, "quote");
+}
+
+static inline object_t *text_of_quotation(object_t *exp) {
+  return cadr(exp);
+}
+
 static void add_binding_to_frame(object_t *var, object_t *val, object_t *frame) {
   cons_entry_t *frame_entry = get_cons_entry(frame);
 
@@ -179,8 +187,12 @@ static object_t *eval_with_env(object_t *obj, object_t *env) {
   if (is_variable(obj)) return lookup_variable_value(obj, env);
   if (is_definition(obj)) {
     object_t *variable = definition_variable(obj);
-    object_t *value = definition_value(obj);
+    object_t *value = eval_with_env(definition_value(obj), env);
     return define_variable(variable, value, env);
+  }
+
+  if (is_quoted(obj)) {
+    return text_of_quotation(obj);
   }
 
   return NULL;
