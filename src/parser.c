@@ -1,6 +1,6 @@
 #include "parser.h"
 #include <utf8proc.h>
-#include <stdint.h>
+#include <stdlib.h>
 #include <stddef.h>
 #include <assert.h>
 #include <string.h>

@@ -2,7 +2,6 @@
 #define SCHEMIN_MEMORY_H
 SCHEMIN_MEMORY_H
 #include <stdlib.h>
-#include <string.h>
 #include "scheme_types.h"
 
 extern object_t *g_scheme_null;
