@@ -7,6 +7,7 @@
 #include "minmax.h"
 #include "scheme_types.h"
 #include "memory.h"
+#include "error.h"
 
 typedef bool (*codepoint_predicate_func)(utf8proc_int32_t codepoint, void *data);
 
@@ -115,7 +116,7 @@ static size_t scan2_for_closing_paren(const char *utf8, size_t len) {
  * Scan string in @ref utf8, processing escapes and placing into @ref outdst.
  * Only scan the string but do not write the processed string copy if @ref outdst is NULL
  * Return error if outdst is non-null and dstlen is not big enough
- * Always return full size of string ()
+ * Always return the original string size -- used for tokenization advance
  */
 static ssize_t scan_string(const char *utf8, size_t len, char **outdst, size_t dstlen, size_t *outdstlen) {
   assert(utf8[0] == '"');
@@ -173,25 +174,6 @@ write_byte:
   if (outdst != NULL) (*outdst)[size] = '\0';
   if (outdstlen != NULL) *outdstlen = size + 1;
   return (ssize_t)i + 1;
-}
-
-static ssize_t scan_and_copy_string(const char *utf8, size_t len, char **dst) {
-  size_t newlen;
-  ssize_t result = scan_string(utf8, len, NULL, 0, &newlen);
-  if (result < 0) {
-    return result;
-  }
-
-  char *dest = (char*)malloc(newlen);
-  result = scan_string(utf8, len, &dest, newlen, NULL);
-  if (result < 0) {
-    free(dest);
-    *dst = NULL;
-    return result;
-  }
-
-  *dst = dest;
-  return (ssize_t)newlen;
 }
 
 static bool is_whitespace(utf8proc_int32_t codepoint, void *data) {
@@ -273,24 +255,25 @@ static object_t *valid_list_sexp_into_object(const char *sexp, size_t len) {
   if (tok == NULL)
     return NULL;
 
-  object_t *result = allocate_object();
-  result->type = SCHEME_CONS;
+  cons_entry_t *entry;
+  object_t *result = allocate_cons(&entry);
   object_t *current = result;
   while (true) {
-    current->data.cons.car = valid_exp_into_object(tok, toklen);
+    object_t *obj = valid_exp_into_object(tok, toklen);
+    entry->car = obj;
 
     remaining -= toklen + leading;
     toklen = utf8_tok_lisp(tok + toklen, remaining, &tok, &leading);
 
     if (tok == NULL) {
-      object_t *terminator = g_scheme_null;
-      current->data.cons.cdr = terminator;
+      entry->cdr = g_scheme_null;
       break;
     }
-    object_t *newobject = allocate_object();
-    newobject->type = SCHEME_CONS;
-    current->data.cons.cdr = newobject;
-    current = newobject;
+    cons_entry_t *next_entry;
+    object_t *next = allocate_cons(&next_entry);
+    entry->cdr = next;
+    entry = next_entry;
+    current = next;
   }
 
   return result;
@@ -301,30 +284,34 @@ object_t* valid_exp_into_object(const char *exp, size_t len) {
   if (exp == NULL) return NULL;
   if (len == 0) return NULL;
 
-  object_t *value;
   if (exp[0] == '(') {
-    value = valid_list_sexp_into_object(exp, len);
+    object_t *value = valid_list_sexp_into_object(exp, len);
 
     if (value == NULL) {
-      value = g_scheme_null;
+      return g_scheme_null;
     }
-  } else if (exp[0] == '"') {
-    value = allocate_object();
-    char *dst;
-    ssize_t result = scan_and_copy_string(exp, len, &dst);
-    assert(result >= 0);
-    value->type = SCHEME_STRING;
-    value->data.str = dst;
-  } else {
-    value = allocate_object();
-    value->type = SCHEME_SYMBOL;
-    char *symbol = (char *)malloc(len + 1);
-    memcpy(symbol, exp, len);
-    symbol[len] = '\0';
-    value->data.symbol = symbol;
-  }
+    return value;
 
-  return value;
+  } else if (exp[0] == '"') {
+    size_t newlen;
+    ssize_t result = scan_string(exp, len, NULL, 0, &newlen);
+    ASSERT_OR_ERROR(result >= 0, "Bad string scan");
+
+    string_entry_t *entry;
+    object_t *value = allocate_string(newlen + 1, &entry);
+    result = scan_string(exp, len, &entry->str, newlen, NULL);
+    ASSERT_OR_ERROR(result >= 0, "Bad string scan");
+    entry->str[newlen] = '\0';
+
+    return value;
+  } else {
+    symbol_entry_t *entry;
+    object_t *value = allocate_symbol(len + 1, &entry);
+    memcpy(entry->sym, exp, len);
+    entry->sym[len] = '\0';
+
+    return value;
+  }
 }
 
 bool quick_verify_scheme(const char *exp, size_t len) {

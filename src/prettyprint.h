@@ -1,5 +1,6 @@
 #ifndef SCHEMIN_PRETTYPRINT_H
 #define SCHEMIN_PRETTYPRINT_H
+SCHEMIN_PRETTYPRINT_H
 
 #include "scheme_types.h"
 

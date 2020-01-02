@@ -1,63 +1,68 @@
 #include "prettyprint.h"
 #include <string.h>
 #include <stdio.h>
-#include <stdlib.h> 
+#include <stdlib.h>
+#include "memory.h"
+#include <assert.h>
 
 static char *new_str_with_word_replaced(const char *s, const char *old, 
 								const char *new) 
 { 
-	char *result; 
-	int i, cnt = 0; 
-	int newlen = strlen(new); 
-	int oldlen = strlen(old); 
+	char *result;
+	size_t i, cnt = 0;
+	size_t newlen = strlen(new);
+	size_t oldlen = strlen(old);
 
-	for (i = 0; s[i] != '\0'; i++) 
-	{ 
-		if (strstr(&s[i], old) == &s[i]) 
-		{ 
-			cnt++; 
+	for (i = 0; s[i] != '\0'; i++)
+	{
+		if (strstr(&s[i], old) == &s[i])
+		{
+			cnt++;
 
-			i += oldlen - 1; 
-		} 
-	} 
+			i += oldlen - 1;
+		}
+	}
 
-	result = (char *)malloc(i + cnt * (newlen - oldlen) + 1); 
+	result = (char *)malloc(i + cnt * (newlen - oldlen) + 1);
 
-	i = 0; 
-	while (*s) 
-	{ 
-		if (strstr(s, old) == s) 
-		{ 
-			strcpy(&result[i], new); 
-			i += newlen; 
-			s += oldlen; 
-		} 
+	i = 0;
+	while (*s)
+	{
+		if (strstr(s, old) == s)
+		{
+			strcpy(&result[i], new);
+			i += newlen;
+			s += oldlen;
+		}
 		else
-			result[i++] = *s++; 
-	} 
+			result[i++] = *s++;
+	}
 
-	result[i] = '\0'; 
-	return result; 
+	result[i] = '\0';
+	return result;
 } 
 
-static void print_cons(cons_t *cons);
+static void print_cons(object_t *cons);
 
 void print_object(object_t *object) {
   switch (object->type) {
     case SCHEME_CONS: {
-      print_cons(&object->data.cons);
+      print_cons(object);
       break;
     }
     case SCHEME_SYMBOL: {
-      printf("%s", object->data.symbol);
+      symbol_entry_t *entry = get_symbol_entry(object);
+      printf("%s", entry->sym);
       break;
     }
     case SCHEME_NULL: {
+      assert(object == g_scheme_null && "reused null");
       printf("'()");
       break;
     }
     case SCHEME_STRING: {
-      const char *escaped = new_str_with_word_replaced(object->data.str, "\"", "\\\"");
+      string_entry_t *entry = get_string_entry(object);
+      const char *escaped = new_str_with_word_replaced(entry->str, "\"", "\\\"");
       printf("\"%s\"", escaped);
       break;
     }
@@ -69,10 +74,11 @@ void print_object(object_t *object) {
   }
 }
 
-static void print_cons(cons_t *cons) {
+static void print_cons(object_t *cons) {
+  cons_entry_t *entry = get_cons_entry(cons);
   printf("(");
-  print_object(cons->car);
+  print_object(entry->car);
   printf(" ");
-  print_object(cons->cdr);
+  print_object(entry->cdr);
   printf(")");
 }

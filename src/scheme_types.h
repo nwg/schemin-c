@@ -12,23 +12,9 @@ typedef enum {
   SCHEME_NULL
 } type_t;
 
-typedef struct object_s object_t;
-
-typedef struct cons_s {
-  object_t *car;
-  object_t *cdr;
-} cons_t;
-
-typedef union {
-  int64_t number;
-  const char *str;
-  const char *symbol;
-  cons_t cons;
-} data_t;
-
-struct object_s {
-  data_t data;
-  type_t type;
-};
+typedef struct object_s {
+  uint64_t number_or_index : 61;
+  type_t type : 3;
+} object_t;
 
 #endif
