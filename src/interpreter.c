@@ -174,7 +174,7 @@ static object_t *lookup_variable_value(object_t *name, object_t *env) {
   return scan_environment(name, env);
 }
 
-object_t *eval_with_env(object_t *obj, object_t *env) {
+static object_t *eval_with_env(object_t *obj, object_t *env) {
   if (is_self_evaluating(obj)) return obj;
   if (is_variable(obj)) return lookup_variable_value(obj, env);
   if (is_definition(obj)) {
