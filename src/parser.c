@@ -298,7 +298,7 @@ object_t* valid_exp_into_object(const char *exp, size_t len) {
     ASSERT_OR_ERROR(result >= 0, "Bad string scan");
 
     string_entry_t *entry;
-    object_t *value = allocate_string(newlen + 1, &entry);
+    object_t *value = allocate_string(newlen, &entry);
     result = scan_string(exp, len, &entry->str, newlen, NULL);
     ASSERT_OR_ERROR(result >= 0, "Bad string scan");
     entry->str[newlen] = '\0';
@@ -306,7 +306,7 @@ object_t* valid_exp_into_object(const char *exp, size_t len) {
     return value;
   } else {
     symbol_entry_t *entry;
-    object_t *value = allocate_symbol(len + 1, &entry);
+    object_t *value = allocate_symbol(len, &entry);
     memcpy(entry->sym, exp, len);
     entry->sym[len] = '\0';
 

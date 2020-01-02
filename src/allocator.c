@@ -119,7 +119,7 @@ typedef struct byte_allocator_header_s {
 byte_allocator_t *make_byte_allocator(size_t page_size) {
   assert(page_size % (uint64_t)getpagesize() == 0 && "Page size must be a multiple of system page size");
 
-  byte_allocator_t *allocator = (byte_allocator_t*)malloc(sizeof(allocator_t));
+  byte_allocator_t *allocator = (byte_allocator_t*)malloc(sizeof(byte_allocator_t));
   allocator->large_entries = NULL;
   assert(ALLOCATOR_PAGES_REALLOC_COUNT > 0);
   allocator->pages = (allocator_byte_t**)malloc(sizeof(allocator_byte_t*) * ALLOCATOR_PAGES_REALLOC_COUNT);

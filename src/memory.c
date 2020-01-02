@@ -80,13 +80,16 @@ object_t *allocate_cons(cons_entry_t **outentry) {
 }
 
 cons_entry_t *get_cons_entry(object_t *cons) {
+  ASSERT_OR_ERROR(cons->type == SCHEME_CONS, "Not a pair");
   return allocator_get_item_at_index(lg_the_conses, cons->number_or_index);
 }
 
 string_entry_t *get_string_entry(object_t *str) {
+  ASSERT_OR_ERROR(str->type == SCHEME_STRING, "Not a string");
   return allocator_get_item_at_index(lg_the_strings, str->number_or_index);
 }
 
 symbol_entry_t *get_symbol_entry(object_t *sym) {
+  ASSERT_OR_ERROR(sym->type == SCHEME_SYMBOL, "Not a symbol");
   return allocator_get_item_at_index(lg_the_symbols, sym->number_or_index);
 }
