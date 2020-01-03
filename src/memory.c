@@ -10,12 +10,14 @@ static byte_allocator_t *lg_byte_allocator;
 static allocator_t *lg_the_conses;
 static allocator_t *lg_the_strings;
 static allocator_t *lg_the_symbols;
+static allocator_t *lg_the_lambdas;
 
 #define OBJECT_PAGE_SIZE (1 << 20)
 #define BYTES_PAGE_SIZE (1 << 21)
 #define STRINGS_PAGE_SIZE (1 << 14)
 #define SYMBOLS_PAGE_SIZE (1 << 14)
 #define CONS_PAGE_SIZE (1 << 20)
+#define LAMBDA_PAGE_SIZE (1 << 14)
 
 int memory_init() {
   g_scheme_null = (object_t*)malloc(sizeof(object_t));
@@ -26,6 +28,7 @@ int memory_init() {
   lg_the_conses = make_allocator(sizeof(cons_entry_t), CONS_PAGE_SIZE);
   lg_the_strings = make_allocator(sizeof(string_entry_t), STRINGS_PAGE_SIZE);
   lg_the_symbols = make_allocator(sizeof(symbol_entry_t), SYMBOLS_PAGE_SIZE);
+  lg_the_lambdas = make_allocator(sizeof(lambda_entry_t), LAMBDA_PAGE_SIZE);
 
   return 0;
 }
@@ -79,6 +82,18 @@ object_t *allocate_cons(cons_entry_t **outentry) {
   return object;
 }
 
+object_t *allocate_lambda(lambda_entry_t **outentry) {
+  object_t *object = allocate_object();
+  object->type = SCHEME_LAMBDA;
+  uint64_t idx;
+  lambda_entry_t *entry = (lambda_entry_t*)allocator_allocate(lg_the_lambdas, &idx);
+  object->number_or_index = idx;
+
+  if (outentry != NULL) *outentry = entry;
+
+  return object;  
+}
+
 cons_entry_t *get_cons_entry(object_t *cons) {
   ASSERT_OR_ERROR(cons->type == SCHEME_CONS, "Not a pair");
   return allocator_get_item_at_index(lg_the_conses, cons->number_or_index);
@@ -92,4 +107,9 @@ string_entry_t *get_string_entry(object_t *str) {
 symbol_entry_t *get_symbol_entry(object_t *sym) {
   ASSERT_OR_ERROR(sym->type == SCHEME_SYMBOL, "Not a symbol");
   return allocator_get_item_at_index(lg_the_symbols, sym->number_or_index);
+}
+
+lambda_entry_t *get_lambda_entry(object_t *lambda) {
+  ASSERT_OR_ERROR(lambda->type == SCHEME_LAMBDA, "Not a lambda");
+  return allocator_get_item_at_index(lg_the_lambdas, lambda->number_or_index);
 }

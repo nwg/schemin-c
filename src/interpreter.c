@@ -134,6 +134,18 @@ static inline object_t *if_alternative(object_t *exp) {
   return cadddr(exp);
 }
 
+static inline bool is_lambda(object_t *exp) {
+  return is_tagged_list(exp, "lambda");
+}
+
+static inline object_t *lambda_parameters(object_t *exp) {
+  return cadr(exp);
+}
+
+static inline object_t *lambda_body(object_t *exp) {
+  return cddr(exp);
+}
+
 static void add_binding_to_frame(object_t *var, object_t *val, object_t *frame) {
   cons_entry_t *frame_entry = get_cons_entry(frame);
 
@@ -224,10 +236,12 @@ static bool is_equal(object_t *obj1, object_t *obj2) {
     case SCHEME_CONS:
     case SCHEME_NULL:
     case SCHEME_NUMBER:
-    case SCHEME_STRING: {
+    case SCHEME_STRING:
+    case SCHEME_LAMBDA: {
       error("not implemented");
     }
   }
+  __builtin_unreachable();  
 }
 
 static bool is_true(object_t *obj) {
@@ -290,6 +304,12 @@ static object_t *eval_with_env(object_t *obj, object_t *env) {
       object_t *alternative = if_alternative(obj);
       return eval_with_env(alternative, env);
     }
+  }
+
+  if (is_lambda(obj)) {
+    object_t *parameters = lambda_parameters(obj);
+    object_t *body = lambda_body(obj);
+    return lambda(parameters, body);
   }
 
   error("Unable to evaluate expression");

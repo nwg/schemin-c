@@ -12,7 +12,9 @@ static const char *statements[] = {
   "(set! x true)",
   "(if x (quote was-true) (quote was-false))",
   "(set! x false)",
-  "(if x (quote was-true) (quote was-false))"
+  "(if x (quote was-true) (quote was-false))",
+  "(define test-lambda (lambda (x y z) x))",
+  "test-lambda"
 };
 
 int main(int argc, char *argv[]) {

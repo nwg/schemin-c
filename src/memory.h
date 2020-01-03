@@ -23,14 +23,21 @@ typedef struct cons_entry_s {
   object_t *cdr;
 } cons_entry_t;
 
+typedef struct lambda_entry_s {
+  object_t *parameters;
+  object_t *body;
+} lambda_entry_t;
+
 int memory_init(void);
 object_t *allocate_cons(cons_entry_t **outentry);
 object_t *allocate_symbol(size_t len, symbol_entry_t **outentry);
 object_t *allocate_string(size_t len, string_entry_t **outentry);
+object_t *allocate_lambda(lambda_entry_t **outentry);
 
 string_entry_t *get_string_entry(object_t *str);
 symbol_entry_t *get_symbol_entry(object_t *sym);
 cons_entry_t *get_cons_entry(object_t *cons);
+lambda_entry_t *get_lambda_entry(object_t *lambda);
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-function"
@@ -52,6 +59,15 @@ static inline object_t *symbol(const char *text) {
 
   return sym;
 
+}
+
+static inline object_t *lambda(object_t *parameters, object_t *body) {
+  lambda_entry_t *entry;
+  object_t *lambda = allocate_lambda(&entry);
+  entry->parameters = parameters;
+  entry->body = body;
+
+  return lambda;
 }
 
 static inline object_t *car(object_t *cons) {

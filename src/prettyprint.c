@@ -61,6 +61,10 @@ void print_object(object_t *object) {
     printf("\"%s\"", escaped);
     break;
   }
+  case SCHEME_LAMBDA: {
+    printf("<lambda>");
+    break;
+  }
   case SCHEME_NUMBER: {
     printf("<not handled>");
     break;
