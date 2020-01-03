@@ -93,6 +93,18 @@ static inline object_t *text_of_quotation(object_t *exp) {
   return cadr(exp);
 }
 
+static inline bool is_assignment(object_t *exp) {
+  return is_tagged_list(exp, "set!");
+}
+
+static inline object_t *assignment_variable(object_t *exp) {
+  return cadr(exp);
+}
+
+static inline object_t *assignment_value(object_t *exp) {
+  return caddr(exp);
+}
+
 static void add_binding_to_frame(object_t *var, object_t *val, object_t *frame) {
   cons_entry_t *frame_entry = get_cons_entry(frame);
 
@@ -143,11 +155,11 @@ static object_t *define_variable(object_t *var, object_t *val, object_t *env) {
   return symbol("ok");
 }
 
-static object_t *scan_environment(object_t *var, object_t *env) {
+static object_t *scan_environment(object_t *var, object_t *env, object_t **outvars, object_t **outvals) {
   while (env != lg_the_empty_env) {
     cons_entry_t *entry = get_cons_entry(env);
     object_t *frame = entry->car;
-    object_t *result = scan_frame(var, frame, NULL, NULL);
+    object_t *result = scan_frame(var, frame, outvars, outvals);
     if (result != NULL) return result;
 
     env = entry->cdr;
@@ -158,6 +170,18 @@ static object_t *scan_environment(object_t *var, object_t *env) {
 
 static object_t *setup_env() {
   return extend_environment(g_scheme_null, g_scheme_null, lg_the_empty_env);
+}
+
+static object_t *set_variable_value(object_t *var, object_t *val, object_t *env) {
+  object_t *vals;
+  object_t *existing = scan_environment(var, env, NULL, &vals);
+  if (existing == NULL) {
+    error("set variable value on non-existent variable");
+  }
+
+  cons_entry_t *entry = get_cons_entry(vals);
+  entry->car = val;
+  return symbol("ok");
 }
 
 int interpreter_init(void) {
@@ -179,7 +203,7 @@ static inline bool is_variable(object_t *obj) {
 
 static object_t *lookup_variable_value(object_t *name, object_t *env) {
   ASSERT_OR_ERROR(name->type == SCHEME_SYMBOL, "not a symbol");
-  return scan_environment(name, env);
+  return scan_environment(name, env, NULL, NULL);
 }
 
 static object_t *eval_with_env(object_t *obj, object_t *env) {
@@ -195,7 +219,13 @@ static object_t *eval_with_env(object_t *obj, object_t *env) {
     return text_of_quotation(obj);
   }
 
-  return NULL;
+  if (is_assignment(obj)) {
+    object_t *variable = assignment_variable(obj);
+    object_t *value = eval_with_env(assignment_value(obj), env);
+    return set_variable_value(variable, value, env);
+  }
+
+  error("Unable to evaluate expression");
 }
 
 object_t *eval(object_t *obj) {

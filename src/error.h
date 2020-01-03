@@ -10,7 +10,7 @@ SCHEMIN_ERROR_H
 
 _Noreturn static inline void error(const char *msg) {
     fprintf(stderr, "%s\n", msg);
-    exit(1);
+    abort();
     __builtin_unreachable();
 }
 
