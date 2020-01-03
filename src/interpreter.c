@@ -304,7 +304,7 @@ static object_t *eval_with_env(object_t *obj, object_t *env);
  * to fail due to statement reordering.
  * 
  * Tail-call optimization will not work in the code as-written without the memory barrier
- * because of compile-time reordering
+ * because of compile-time combination of the two calls to eval_with_env
  */
 static inline object_t *eval_sequence(object_t *seq, object_t *env) {
   object_t *exp = first_exp(seq);
