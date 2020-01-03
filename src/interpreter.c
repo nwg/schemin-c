@@ -200,13 +200,8 @@ static object_t *lookup_variable_value(object_t *name, object_t *env);
 
 static object_t *setup_env(void) {
   object_t *env = extend_environment(g_scheme_null, g_scheme_null, lg_the_empty_env);
-  print_object(env);
-  printf("\n");
   define_variable(symbol("false"), lg_false, env);
-  print_object(lookup_variable_value(symbol("false"), env));
-  print_object(env);
   define_variable(symbol("true"), lg_true, env);
-  print_object(env);
 
   return env;
 }
