@@ -4,6 +4,7 @@ SCHEMIN_MEMORY_H
 #include <stdlib.h>
 #include <string.h>
 #include "scheme_types.h"
+#include <stdbool.h>
 
 extern object_t *g_scheme_null;
 
@@ -71,6 +72,22 @@ static inline object_t *cddr(object_t *cons) {
 
 static inline object_t *caddr(object_t *cons) {
   return get_cons_entry(cddr(cons))->car;
+}
+
+static inline object_t *cdddr(object_t *cons) {
+  return cdr(cddr(cons));
+}
+
+static inline object_t *cadddr(object_t *cons) {
+  return car(cdddr(cons));
+}
+
+static inline bool symeq(object_t *sym1, object_t *sym2) {
+  symbol_entry_t *entry1 = get_symbol_entry(sym1);
+  symbol_entry_t *entry2 = get_symbol_entry(sym2);
+
+  if (entry1->len != entry2->len) return false;
+  return strncmp(entry1->sym, entry2->sym, entry1->len) == 0;
 }
 
 #pragma clang diagnostic pop

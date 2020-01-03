@@ -8,12 +8,25 @@
 
 static object_t *lg_the_empty_env;
 static object_t *lg_global_env;
+static object_t *lg_false;
+static object_t *lg_true;
 
 typedef object_t * (*primitive_func)(int argc, object_t *argv[]);
 typedef struct primitive_mapping_s {
   const char *name;
   primitive_func func;
 } primitive_mapping_t;
+
+static object_t *setup_env();
+
+int interpreter_init(void) {
+  lg_the_empty_env = g_scheme_null;
+  lg_false = symbol("#f");
+  lg_true = symbol("#t");
+  lg_global_env = setup_env();
+
+  return 0;
+}
 
 static object_t *car_primitive(int argc, object_t *argv[]) {
   ASSERT_OR_ERROR(argc == 1, "Expected 1 arg");
@@ -105,6 +118,22 @@ static inline object_t *assignment_value(object_t *exp) {
   return caddr(exp);
 }
 
+static inline bool is_if(object_t *exp) {
+  return is_tagged_list(exp, "if");
+}
+
+static inline object_t *if_predicate(object_t *exp) {
+  return cadr(exp);
+}
+
+static inline object_t *if_consequent(object_t *exp) {
+  return caddr(exp);
+}
+
+static inline object_t *if_alternative(object_t *exp) {
+  return cadddr(exp);
+}
+
 static void add_binding_to_frame(object_t *var, object_t *val, object_t *frame) {
   cons_entry_t *frame_entry = get_cons_entry(frame);
 
@@ -168,8 +197,41 @@ static object_t *scan_environment(object_t *var, object_t *env, object_t **outva
   return NULL;
 }
 
+#include "prettyprint.h"
+
+static object_t *lookup_variable_value(object_t *name, object_t *env);
+
 static object_t *setup_env() {
-  return extend_environment(g_scheme_null, g_scheme_null, lg_the_empty_env);
+  object_t *env = extend_environment(g_scheme_null, g_scheme_null, lg_the_empty_env);
+  print_object(env);
+  printf("\n");
+  define_variable(symbol("false"), lg_false, env);
+  print_object(lookup_variable_value(symbol("false"), env));
+  print_object(env);
+  define_variable(symbol("true"), lg_true, env);
+  print_object(env);
+
+  return env;
+}
+
+static bool is_equal(object_t *obj1, object_t *obj2) {
+  if (obj1->type != obj2->type) return false;
+
+  switch (obj1->type) {
+    case SCHEME_SYMBOL: {
+      return symeq(obj1, obj2);
+    }
+    case SCHEME_CONS:
+    case SCHEME_NULL:
+    case SCHEME_NUMBER:
+    case SCHEME_STRING: {
+      error("not implemented");
+    }
+  }
+}
+
+static bool is_true(object_t *obj) {
+  return !is_equal(obj, lg_false);
 }
 
 static object_t *set_variable_value(object_t *var, object_t *val, object_t *env) {
@@ -182,13 +244,6 @@ static object_t *set_variable_value(object_t *var, object_t *val, object_t *env)
   cons_entry_t *entry = get_cons_entry(vals);
   entry->car = val;
   return symbol("ok");
-}
-
-int interpreter_init(void) {
-  lg_the_empty_env = g_scheme_null;
-  lg_global_env = setup_env();
-
-  return 0;
 }
 
 static inline bool is_self_evaluating(object_t *obj) {
@@ -223,6 +278,18 @@ static object_t *eval_with_env(object_t *obj, object_t *env) {
     object_t *variable = assignment_variable(obj);
     object_t *value = eval_with_env(assignment_value(obj), env);
     return set_variable_value(variable, value, env);
+  }
+
+  if (is_if(obj)) {
+    object_t *predicate = if_predicate(obj);
+    object_t *predicate_result = eval_with_env(predicate, env);
+    if (is_true(predicate_result)) {
+      object_t *consequent = if_consequent(obj);
+      return eval_with_env(consequent, env);
+    } else {
+      object_t *alternative = if_alternative(obj);
+      return eval_with_env(alternative, env);
+    }
   }
 
   error("Unable to evaluate expression");

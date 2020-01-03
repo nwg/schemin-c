@@ -9,8 +9,10 @@
 
 static const char *statements[] = {
   "(define x (quote abc))",
-  "(set! x (quote def))",
-  "x"
+  "(set! x true)",
+  "(if x (quote was-true) (quote was-false))",
+  "(set! x false)",
+  "(if x (quote was-true) (quote was-false))"
 };
 
 int main(int argc, char *argv[]) {
