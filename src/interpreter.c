@@ -296,18 +296,26 @@ static object_t *rest_exps(object_t *seq) {
 
 static object_t *eval_with_env(object_t *obj, object_t *env);
 
+/*
+ * Tail call optimization currently works in clang 11.0.0 for the final eval in this function
+ * If you modify this code or use a different compiler, you should check the optimized release assembler
+ * output and verify that clang's sibling call optimization is still working as it should
+ * Note that modifications to the code with the same logic could cause tail-call optimization pass
+ * to fail due to statement reordering.
+ * 
+ * Tail-call optimization will not work in the code as-written without the memory barrier
+ * because of compile-time reordering
+ */
 static inline object_t *eval_sequence(object_t *seq, object_t *env) {
-  object_t *exp;
-  while (true) {
-    exp = first_exp(seq);
-    if (is_last_exp(seq)) break;
-
+  object_t *exp = first_exp(seq);
+  while (!is_last_exp(seq)) {
     eval_with_env(exp, env);
-
     seq = rest_exps(seq);
+    exp = first_exp(seq);
   }
 
-  return eval_with_env(exp, env); // @todo verify since this is inline, when used from eval_with_env we get tail call optimization
+  __asm__ volatile("" ::: "memory"); // Compile-time memory barrier for tail-call optimization
+  return eval_with_env(exp, env);
 }
 
 static object_t *eval_with_env(object_t *obj, object_t *env) {
