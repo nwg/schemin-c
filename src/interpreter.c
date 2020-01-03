@@ -17,7 +17,7 @@ typedef struct primitive_mapping_s {
   primitive_func func;
 } primitive_mapping_t;
 
-static object_t *setup_env();
+static object_t *setup_env(void);
 
 int interpreter_init(void) {
   lg_the_empty_env = g_scheme_null;
@@ -201,7 +201,7 @@ static object_t *scan_environment(object_t *var, object_t *env, object_t **outva
 
 static object_t *lookup_variable_value(object_t *name, object_t *env);
 
-static object_t *setup_env() {
+static object_t *setup_env(void) {
   object_t *env = extend_environment(g_scheme_null, g_scheme_null, lg_the_empty_env);
   print_object(env);
   printf("\n");
