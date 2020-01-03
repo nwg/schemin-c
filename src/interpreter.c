@@ -241,7 +241,6 @@ static bool is_equal(object_t *obj1, object_t *obj2) {
       error("not implemented");
     }
   }
-  __builtin_unreachable();  
 }
 
 static bool is_true(object_t *obj) {
