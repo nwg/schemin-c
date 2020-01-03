@@ -19,7 +19,8 @@ static const char *statements[] = {
     (define y \"somestring\")\
     (define z \"someotherstring\")\
     y\
-    z)"
+    z)",
+  "car"
 };
 
 int main(int argc, char *argv[]) {

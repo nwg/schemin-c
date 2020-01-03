@@ -65,6 +65,11 @@ void print_object(object_t *object) {
     printf("<lambda>");
     break;
   }
+  case SCHEME_PRIMITIVE: {
+    primitive_entry_t *entry = get_primitive_entry(object);
+    printf("<primitive %s>", entry->name);
+    break;
+  }
   case SCHEME_NUMBER: {
     printf("<not handled>");
     break;

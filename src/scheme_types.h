@@ -10,7 +10,8 @@ typedef enum {
   SCHEME_SYMBOL,
   SCHEME_CONS,
   SCHEME_NULL,
-  SCHEME_LAMBDA
+  SCHEME_LAMBDA,
+  SCHEME_PRIMITIVE
 } type_t;
 
 typedef struct object_s {

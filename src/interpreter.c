@@ -11,33 +11,18 @@ static object_t *lg_global_env;
 static object_t *lg_false;
 static object_t *lg_true;
 
-typedef object_t * (*primitive_func)(int argc, object_t *argv[]);
-typedef struct primitive_mapping_s {
-  const char *name;
-  primitive_func func;
-} primitive_mapping_t;
-
 static object_t *setup_env(void);
+static void did_install_primitive(object_t *primitive, primitive_entry_t *entry);
 
 int interpreter_init(void) {
   lg_the_empty_env = g_scheme_null;
   lg_false = symbol("#f");
   lg_true = symbol("#t");
   lg_global_env = setup_env();
+  add_did_install_primitive_hook(&did_install_primitive);
 
   return 0;
 }
-
-static object_t *car_primitive(int argc, object_t *argv[]) {
-  ASSERT_OR_ERROR(argc == 1, "Expected 1 arg");
-  ASSERT_OR_ERROR(argv[0]->type == SCHEME_CONS, "Expected cons");
-  cons_entry_t *entry = get_cons_entry(argv[0]);
-  return entry->car;
-}
-
-static primitive_mapping_t primitives[] = {
-  {"car", car_primitive},
-};
 
 static int internal_length(object_t *cons) {
   if (cons == g_scheme_null) {
@@ -237,10 +222,15 @@ static bool is_equal(object_t *obj1, object_t *obj2) {
     case SCHEME_NULL:
     case SCHEME_NUMBER:
     case SCHEME_STRING:
-    case SCHEME_LAMBDA: {
+    case SCHEME_LAMBDA:
+    case SCHEME_PRIMITIVE: {
       error("not implemented");
     }
   }
+}
+
+static void did_install_primitive(object_t *primitive, primitive_entry_t *entry) {
+  define_variable(symbol(entry->name), primitive, lg_global_env);
 }
 
 static bool is_true(object_t *obj) {
@@ -320,7 +310,11 @@ static inline object_t *eval_sequence(object_t *seq, object_t *env) {
 
 static object_t *eval_with_env(object_t *obj, object_t *env) {
   if (is_self_evaluating(obj)) return obj;
-  if (is_variable(obj)) return lookup_variable_value(obj, env);
+  if (is_variable(obj)) {
+    object_t *value = lookup_variable_value(obj, env);
+    ASSERT_OR_ERROR(value != NULL, "Unbound variable");
+    return value;
+  }
   if (is_definition(obj)) {
     object_t *variable = definition_variable(obj);
     object_t *value = eval_with_env(definition_value(obj), env);
