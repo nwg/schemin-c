@@ -14,7 +14,12 @@ static const char *statements[] = {
   "(set! x false)",
   "(if x (quote was-true) (quote was-false))",
   "(define test-lambda (lambda (x y z) x))",
-  "test-lambda"
+  "test-lambda",
+  "(begin\
+    (define y \"somestring\")\
+    (define z \"someotherstring\")\
+    y\
+    z)"
 };
 
 int main(int argc, char *argv[]) {

@@ -274,6 +274,42 @@ static object_t *lookup_variable_value(object_t *name, object_t *env) {
   return scan_environment(name, env, NULL, NULL);
 }
 
+static bool is_begin(object_t *exp) {
+  return is_tagged_list(exp, "begin");
+}
+
+static object_t *begin_actions(object_t *exp) {
+  return cdr(exp);
+}
+
+static bool is_last_exp(object_t *seq) {
+  return get_cons_entry(seq)->cdr == g_scheme_null;
+}
+
+static object_t *first_exp(object_t *seq) {
+  return car(seq);
+}
+
+static object_t *rest_exps(object_t *seq) {
+  return cdr(seq);
+}
+
+static object_t *eval_with_env(object_t *obj, object_t *env);
+
+static inline object_t *eval_sequence(object_t *seq, object_t *env) {
+  object_t *exp;
+  while (true) {
+    exp = first_exp(seq);
+    if (is_last_exp(seq)) break;
+
+    eval_with_env(exp, env);
+
+    seq = rest_exps(seq);
+  }
+
+  return eval_with_env(exp, env); // @todo verify since this is inline, when used from eval_with_env we get tail call optimization
+}
+
 static object_t *eval_with_env(object_t *obj, object_t *env) {
   if (is_self_evaluating(obj)) return obj;
   if (is_variable(obj)) return lookup_variable_value(obj, env);
@@ -309,6 +345,10 @@ static object_t *eval_with_env(object_t *obj, object_t *env) {
     object_t *parameters = lambda_parameters(obj);
     object_t *body = lambda_body(obj);
     return lambda(parameters, body);
+  }
+
+  if (is_begin(obj)) {
+    return eval_sequence(begin_actions(obj), env);
   }
 
   error("Unable to evaluate expression");
