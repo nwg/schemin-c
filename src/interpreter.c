@@ -13,6 +13,7 @@ static object_t *lg_true;
 
 static object_t *setup_env(void);
 static void did_install_primitive(object_t *primitive, primitive_entry_t *entry);
+static object_t *eval_with_env(object_t *obj, object_t *env);
 
 int interpreter_init(void) {
   lg_the_empty_env = g_scheme_null;
@@ -194,8 +195,6 @@ static object_t *scan_environment(object_t *var, object_t *env, object_t **outva
   return NULL;
 }
 
-#include "prettyprint.h"
-
 static object_t *lookup_variable_value(object_t *name, object_t *env);
 
 static object_t *setup_env(void) {
@@ -279,7 +278,65 @@ static object_t *rest_exps(object_t *seq) {
   return cdr(seq);
 }
 
-static object_t *eval_with_env(object_t *obj, object_t *env);
+static bool is_application(object_t *exp) {
+  return exp->type == SCHEME_CONS;
+}
+
+static object_t *application_operator(object_t *exp) {
+  return car(exp);
+}
+
+static object_t *application_operands(object_t *exp) {
+  return cdr(exp);
+}
+
+static inline object_t *array_to_cons(object_t **objects, size_t num_objects) {
+  assert(num_objects > 0);
+  object_t *object;
+  cons_entry_t *entry;
+  object_t *result = allocate_cons(&entry);
+  entry->car = objects[0];
+  for (size_t i = 1; i < num_objects; i++) {
+    cons_entry_t *next_entry;
+    object_t *next = allocate_cons(&next_entry);
+    entry->cdr = next;
+    next_entry->car = objects[i];
+    entry = next_entry;
+  }
+  entry->cdr = g_scheme_null;
+  return result;
+}
+
+static inline object_t *eval_sequence(object_t *seq, object_t *env);
+
+#define MAX_OPERANDS 32
+
+static inline object_t *eval_application(object_t *exp, object_t *env) {
+  object_t *operands_evaled[MAX_OPERANDS];
+  object_t *op = eval_with_env(application_operator(exp), env);
+  assert(op->type == SCHEME_LAMBDA || op->type == SCHEME_PRIMITIVE);
+  object_t *operands = application_operands(exp);
+
+  uint64_t num_operands = 0;
+  for (object_t *remaining = operands; remaining != g_scheme_null; remaining = cdr(remaining)) {
+    object_t *unevaled = car(remaining);
+    object_t *evaled = eval_with_env(unevaled, env);
+    operands_evaled[num_operands++] = evaled;
+  }
+
+  object_t *vals = array_to_cons(operands_evaled, num_operands);
+  object_t *vars;
+  if (op->type == SCHEME_LAMBDA) {
+    lambda_entry_t *entry = get_lambda_entry(op);
+    vars = entry->parameters;
+    object_t *extended = extend_environment(vars, vals, env);
+    return eval_sequence(entry->body, extended);
+  }
+
+  primitive_entry_t *entry = get_primitive_entry(op);
+  assert(entry->func != NULL);
+  return entry->func(num_operands, operands_evaled);
+}
 
 /*
  * Tail call optimization currently works in clang 11.0.0 for the final eval in this function
@@ -346,6 +403,10 @@ static object_t *eval_with_env(object_t *obj, object_t *env) {
 
   if (is_begin(obj)) {
     return eval_sequence(begin_actions(obj), env);
+  }
+
+  if (is_application(obj)) {
+    return eval_application(obj, env);
   }
 
   error("Unable to evaluate expression");
