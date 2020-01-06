@@ -11,8 +11,7 @@ typedef struct primitive_mapping_s {
 static object_t *car_primitive(int argc, object_t *argv[]) {
   ASSERT_OR_ERROR(argc == 1, "Expected 1 arg");
   ASSERT_OR_ERROR(argv[0]->type == SCHEME_CONS, "Expected cons");
-  cons_entry_t *entry = get_cons_entry(argv[0]);
-  return entry->car;
+  return car(argv[0]);
 }
 
 static primitive_mapping_t primitives[] = {
