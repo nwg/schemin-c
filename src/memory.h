@@ -8,6 +8,8 @@ SCHEMIN_MEMORY_H
 #include "primitives.h"
 
 extern object_t *g_scheme_null;
+extern object_t *g_false;
+extern object_t *g_true;
 
 typedef struct string_entry_s {
   char *str;
@@ -43,12 +45,15 @@ object_t *allocate_symbol(size_t len, symbol_entry_t **outentry);
 object_t *allocate_string(size_t len, string_entry_t **outentry);
 object_t *allocate_lambda(lambda_entry_t **outentry);
 object_t *allocate_primitive(const char *name, primitive_func func, primitive_entry_t **outentry);
+object_t *allocate_number(int64_t number);
+object_t *allocate_double(double number);
 
 string_entry_t *get_string_entry(object_t *str);
 symbol_entry_t *get_symbol_entry(object_t *sym);
 cons_entry_t *get_cons_entry(object_t *cons);
 lambda_entry_t *get_lambda_entry(object_t *lambda);
 primitive_entry_t *get_primitive_entry(object_t *primitive);
+double get_double(object_t *doub);
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-function"

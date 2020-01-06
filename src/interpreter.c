@@ -8,8 +8,6 @@
 
 static object_t *lg_the_empty_env;
 static object_t *lg_global_env;
-static object_t *lg_false;
-static object_t *lg_true;
 
 static object_t *setup_env(void);
 static void did_install_primitive(object_t *primitive, primitive_entry_t *entry);
@@ -17,8 +15,6 @@ static object_t *eval_with_env(object_t *obj, object_t *env);
 
 int interpreter_init(void) {
   lg_the_empty_env = g_scheme_null;
-  lg_false = symbol("#f");
-  lg_true = symbol("#t");
   lg_global_env = setup_env();
   add_did_install_primitive_hook(&did_install_primitive);
 
@@ -199,8 +195,8 @@ static object_t *lookup_variable_value(object_t *name, object_t *env);
 
 static object_t *setup_env(void) {
   object_t *env = extend_environment(g_scheme_null, g_scheme_null, lg_the_empty_env);
-  define_variable(symbol("false"), lg_false, env);
-  define_variable(symbol("true"), lg_true, env);
+  define_variable(symbol("false"), g_false, env);
+  define_variable(symbol("true"), g_true, env);
 
   return env;
 }
@@ -217,7 +213,8 @@ static bool is_equal(object_t *obj1, object_t *obj2) {
     case SCHEME_NUMBER:
     case SCHEME_STRING:
     case SCHEME_LAMBDA:
-    case SCHEME_PRIMITIVE: {
+    case SCHEME_PRIMITIVE:
+    case SCHEME_DOUBLE: {
       error("not implemented");
     }
   }
@@ -228,7 +225,7 @@ static void did_install_primitive(object_t *primitive, primitive_entry_t *entry)
 }
 
 static bool is_true(object_t *obj) {
-  return !is_equal(obj, lg_false);
+  return !is_equal(obj, g_false);
 }
 
 static object_t *set_variable_value(object_t *var, object_t *val, object_t *env) {
@@ -246,7 +243,8 @@ static object_t *set_variable_value(object_t *var, object_t *val, object_t *env)
 static inline bool is_self_evaluating(object_t *obj) {
   return obj->type == SCHEME_NULL
       || obj->type == SCHEME_NUMBER
-      || obj->type == SCHEME_STRING;
+      || obj->type == SCHEME_STRING
+      || obj->type == SCHEME_DOUBLE;
 }
 
 static inline bool is_variable(object_t *obj) {
@@ -335,7 +333,7 @@ static inline object_t *eval_application(object_t *exp, object_t *env) {
 
   primitive_entry_t *entry = get_primitive_entry(op);
   assert(entry->func != NULL);
-  return entry->func(num_operands, operands_evaled);
+  return entry->func((int)num_operands, operands_evaled);
 }
 
 /*

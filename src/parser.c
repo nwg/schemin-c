@@ -4,6 +4,7 @@
 #include <stddef.h>
 #include <assert.h>
 #include <string.h>
+#include <errno.h>
 #include "minmax.h"
 #include "scheme_types.h"
 #include "memory.h"
@@ -304,14 +305,37 @@ object_t* valid_exp_into_object(const char *exp, size_t len) {
     entry->str[newlen] = '\0';
 
     return value;
-  } else {
-    symbol_entry_t *entry;
-    object_t *value = allocate_symbol(len, &entry);
-    memcpy(entry->sym, exp, len);
-    entry->sym[len] = '\0';
-
-    return value;
   }
+
+  {
+    char *tailptr;
+    errno = 0;
+    intmax_t number = strtoimax(exp, &tailptr, 0);
+    if ((size_t)(tailptr - exp) == len) {
+      ASSERT_OR_ERROR(errno != ERANGE, "Integer out of range");
+      ASSERT_OR_ERROR(number <= SCHEME_INT_MAX, "Too big for small integer");
+      ASSERT_OR_ERROR(number >= SCHEME_INT_MIN, "Too small for small integer");
+      object_t *value = allocate_number((int64_t)number);
+      return value;
+    }
+  }
+  {
+    char *tailptr;
+    errno = 0;
+    double dnumber = strtod(exp, &tailptr);
+    if ((size_t)(tailptr - exp) == len) {
+      ASSERT_OR_ERROR(errno != ERANGE, "double out of range");
+      object_t *value = allocate_double(dnumber);
+      return value;
+    }
+  }
+
+  symbol_entry_t *entry;
+  object_t *value = allocate_symbol(len, &entry);
+  memcpy(entry->sym, exp, len);
+  entry->sym[len] = '\0';
+
+  return value;
 }
 
 bool quick_verify_scheme(const char *exp, size_t len) {

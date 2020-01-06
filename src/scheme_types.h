@@ -11,12 +11,22 @@ typedef enum {
   SCHEME_CONS,
   SCHEME_NULL,
   SCHEME_LAMBDA,
-  SCHEME_PRIMITIVE
+  SCHEME_PRIMITIVE,
+  SCHEME_DOUBLE
 } type_t;
 
 typedef struct object_s {
-  uint64_t number_or_index : 61;
+  int64_t number_or_index : 61;
   type_t type : 3;
 } object_t;
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-function"
+#pragma clang diagnostic ignored "-Wunused-macros"
+
+#define SCHEME_INT_MAX ((1LL << 60) - 1)
+#define SCHEME_INT_MIN (-(1LL << 60))
+
+#pragma clang diagnostic pop
 
 #endif

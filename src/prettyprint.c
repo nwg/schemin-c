@@ -41,39 +41,44 @@ static void print_cons(object_t *cons);
 
 void print_object(object_t *object) {
   switch (object->type) {
-  case SCHEME_CONS: {
-    print_cons(object);
-    break;
-  }
-  case SCHEME_SYMBOL: {
-    symbol_entry_t *entry = get_symbol_entry(object);
-    printf("'%s", entry->sym);
-    break;
-  }
-  case SCHEME_NULL: {
-    assert(object == g_scheme_null && "reused null");
-    printf("'()");
-    break;
-  }
-  case SCHEME_STRING: {
-    string_entry_t *entry = get_string_entry(object);
-    const char *escaped = new_str_with_word_replaced(entry->str, "\"", "\\\"");
-    printf("\"%s\"", escaped);
-    break;
-  }
-  case SCHEME_LAMBDA: {
-    printf("<lambda>");
-    break;
-  }
-  case SCHEME_PRIMITIVE: {
-    primitive_entry_t *entry = get_primitive_entry(object);
-    printf("<primitive %s>", entry->name);
-    break;
-  }
-  case SCHEME_NUMBER: {
-    printf("<not handled>");
-    break;
-  }
+    case SCHEME_CONS: {
+      print_cons(object);
+      break;
+    }
+    case SCHEME_SYMBOL: {
+      symbol_entry_t *entry = get_symbol_entry(object);
+      printf("'%s", entry->sym);
+      break;
+    }
+    case SCHEME_NULL: {
+      assert(object == g_scheme_null && "reused null");
+      printf("'()");
+      break;
+    }
+    case SCHEME_STRING: {
+      string_entry_t *entry = get_string_entry(object);
+      const char *escaped = new_str_with_word_replaced(entry->str, "\"", "\\\"");
+      printf("\"%s\"", escaped);
+      break;
+    }
+    case SCHEME_LAMBDA: {
+      printf("<lambda>");
+      break;
+    }
+    case SCHEME_PRIMITIVE: {
+      primitive_entry_t *entry = get_primitive_entry(object);
+      printf("<primitive %s>", entry->name);
+      break;
+    }
+    case SCHEME_NUMBER: {
+      printf("%lld", object->number_or_index);
+      break;
+    }
+    case SCHEME_DOUBLE: {
+      double number = get_double(object);
+      printf("%0.3f", number);
+      break;
+    }
   }
 }
 

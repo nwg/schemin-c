@@ -8,6 +8,8 @@
 #include "interpreter.h"
 
 static const char *statements[] = {
+  "-1152921504606846976",
+  "1152921504606846975",
   "(define x (quote abc))",
   "(set! x true)",
   "(if x (quote was-true) (quote was-false))",
@@ -21,7 +23,17 @@ static const char *statements[] = {
     y\
     z)",
   "(car (quote (a b c)))",
-  "(test-lambda \"hello\" \"there\")"
+  "(test-lambda \"hello\" \"there\")",
+  "200",
+  "200.0",
+  "(define fact\
+   (lambda (n)\
+    (if (= n 1)\
+    1\
+    (* n (fact (- n 1))))))",
+  "(fact 5)",
+
+
 };
 
 int main(int argc, char *argv[]) {
