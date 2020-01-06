@@ -330,12 +330,7 @@ object_t* valid_exp_into_object(const char *exp, size_t len) {
     }
   }
 
-  symbol_entry_t *entry;
-  object_t *value = allocate_symbol(len, &entry);
-  memcpy(entry->sym, exp, len);
-  entry->sym[len] = '\0';
-
-  return value;
+  return symboln(exp, len);
 }
 
 bool quick_verify_scheme(const char *exp, size_t len) {

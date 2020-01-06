@@ -58,33 +58,10 @@ double get_double(object_t *doub);
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-function"
 
-static inline object_t *cons(object_t *car, object_t *cdr) {
-  cons_entry_t *entry;
-  object_t *object = allocate_cons(&entry);
-  entry->car = car;
-  entry->cdr = cdr;
-  return object;
-}
-
-static inline object_t *symbol(const char *text) {
-  symbol_entry_t *entry;
-  size_t len = strlen(text);
-  object_t *sym = allocate_symbol(len, &entry);
-  entry->len = len;
-  memcpy(entry->sym, text, len);
-
-  return sym;
-
-}
-
-static inline object_t *lambda(object_t *parameters, object_t *body) {
-  lambda_entry_t *entry;
-  object_t *lambda = allocate_lambda(&entry);
-  entry->parameters = parameters;
-  entry->body = body;
-
-  return lambda;
-}
+object_t *cons(object_t *car, object_t *cdr);
+object_t *symbol(const char *text);
+object_t *symboln(const char *text, size_t len);
+object_t *lambda(object_t *parameters, object_t *body);
 
 static inline object_t *car(object_t *cons) {
   return get_cons_entry(cons)->car;
@@ -114,12 +91,8 @@ static inline object_t *cadddr(object_t *cons) {
   return car(cdddr(cons));
 }
 
-static inline bool symeq(object_t *sym1, object_t *sym2) {
-  symbol_entry_t *entry1 = get_symbol_entry(sym1);
-  symbol_entry_t *entry2 = get_symbol_entry(sym2);
-
-  if (entry1->len != entry2->len) return false;
-  return strncmp(entry1->sym, entry2->sym, entry1->len) == 0;
+static inline bool is_eq(object_t *sym1, object_t *sym2) {
+  return sym1 == sym2;
 }
 
 #pragma clang diagnostic pop

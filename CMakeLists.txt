@@ -18,6 +18,7 @@ add_executable(schemin
  src/allocator.c
  src/interpreter.c
  src/primitives.c
+ src/hash.c
 )
 
 set_property(TARGET schemin PROPERTY C_STANDARD 11)

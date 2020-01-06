@@ -32,8 +32,7 @@ static const char *statements[] = {
     1\
     (* n (fact (- n 1))))))",
   "(fact 5)",
-
-
+  "(quote (somesym1 somesym2 somesym1))"
 };
 
 int main(int argc, char *argv[]) {

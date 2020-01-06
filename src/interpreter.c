@@ -206,7 +206,7 @@ static bool is_equal(object_t *obj1, object_t *obj2) {
 
   switch (obj1->type) {
     case SCHEME_SYMBOL: {
-      return symeq(obj1, obj2);
+      return is_eq(obj1, obj2);
     }
     case SCHEME_CONS:
     case SCHEME_NULL:

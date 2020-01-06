@@ -1,6 +1,7 @@
 #include "memory.h"
 #include "allocator.h"
 #include "error.h"
+#include "hash.h"
 
 typedef struct did_install_primitive_hooks_s did_install_primitive_hooks_t;
 struct did_install_primitive_hooks_s {
@@ -13,6 +14,8 @@ object_t *g_false;
 object_t *g_true;
 
 static did_install_primitive_hooks_t *lg_did_install_primitive_hooks = NULL;
+
+static hash_t *lg_symbol_table;
 
 static allocator_t *lg_object_allocator;
 static byte_allocator_t *lg_byte_allocator;
@@ -44,6 +47,8 @@ int memory_init() {
   lg_the_lambdas = make_allocator(sizeof(lambda_entry_t), LAMBDA_PAGE_SIZE);
   lg_the_primitives = make_allocator(sizeof(primitive_entry_t), PRIMITIVE_PAGE_SIZE);
   lg_the_doubles = make_allocator(sizeof(double), DOUBLE_PAGE_SIZE);
+
+  lg_symbol_table = make_hash(1<<14);
 
   g_false = symbol("#f");
   g_true = symbol("#t");
@@ -188,4 +193,43 @@ primitive_entry_t *get_primitive_entry(object_t *primitive) {
 
 double get_double(object_t *doub) {
   return *(double*)allocator_get_item_at_index(lg_the_doubles, (uint64_t)(doub->number_or_index));
+}
+
+object_t *cons(object_t *car, object_t *cdr) {
+  cons_entry_t *entry;
+  object_t *object = allocate_cons(&entry);
+  entry->car = car;
+  entry->cdr = cdr;
+  return object;
+}
+
+object_t *symbol(const char *text) {
+  size_t n = strlen(text);
+  return symboln(text, n);
+}
+
+object_t *symboln(const char *text, size_t len) {
+  object_t *sym = (object_t*)hash_get(lg_symbol_table, text, len);
+  if (sym != NULL) {
+    return sym;
+  }
+
+  symbol_entry_t *entry;
+  sym = allocate_symbol(len, &entry);
+  entry->len = len;
+  memcpy(entry->sym, text, len);
+  entry->sym[len] = '\0';
+
+  hash_set(lg_symbol_table, text, len, sym);
+
+  return sym;
+}
+
+object_t *lambda(object_t *parameters, object_t *body) {
+  lambda_entry_t *entry;
+  object_t *lambda = allocate_lambda(&entry);
+  entry->parameters = parameters;
+  entry->body = body;
+
+  return lambda;
 }
